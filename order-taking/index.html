@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canteen Order Taking Panel – Premium Student Selection Flow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+        .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+        .avatar-gradient { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .confetti { pointer-events: none; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-emerald-600 to-teal-500 p-4 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl md:text-2xl font-bold">🍽️ Canteen Order Taking Panel</h1>
+        </div>
+    </header>
+
+    <!-- Student Selection Screen -->
+    <div id="students-screen" class="container mx-auto px-4 py-6">
+        <!-- Search Bar -->
+        <div class="mb-6 glass rounded-xl p-4">
+            <div class="flex items-center">
+                <i data-lucide="search" class="w-5 h-5 mr-3 text-gray-400"></i>
+                <input type="text" id="search-input" placeholder="Search by name or roll number..." class="w-full bg-transparent outline-none text-white placeholder-gray-400">
+            </div>
+        </div>
+
+        <!-- Students Grid -->
+        <div id="students-loading" class="text-center py-12 text-gray-400">
+            <div class="inline-flex items-center"><i data-lucide="loader-2" class="w-6 h-6 mr-2 animate-spin"></i>Loading students...</div>
+        </div>
+        <div id="students-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 hidden"></div>
+    </div>
+
+    <!-- Food Ordering Screen -->
+    <div id="ordering-screen" class="container mx-auto px-4 py-6 hidden">
+        <!-- Back Button -->
+        <div class="mb-6 flex items-center">
+            <button id="back-btn" class="flex items-center bg-gray-800 hover:bg-gray-700 p-3 rounded-lg transition-colors">
+                <i data-lucide="arrow-left" class="w-5 h-5 mr-2"></i>Back to Students
+            </button>
+            <div class="ml-auto text-sm text-gray-400">
+                Ordering for: <span id="selected-student-name" class="font-semibold"></span> (<span id="selected-roll-no"></span>)
+            </div>
+        </div>
+
+        <!-- Food Grid -->
+        <div id="foods-loading" class="text-center py-12 text-gray-400">
+            <div class="inline-flex items-center"><i data-lucide="loader-2" class="w-6 h-6 mr-2 animate-spin"></i>Loading menu...</div>
+        </div>
+        <div id="foods-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6 hidden"></div>
+
+        <!-- Order Summary -->
+        <div id="order-summary" class="glass rounded-xl p-4 animate-fadeIn">
+            <h3 class="text-lg font-semibold mb-3 flex items-center"><i data-lucide="shopping-cart" class="w-5 h-5 mr-2"></i>Current Order</h3>
+            <div id="order-items" class="space-y-2 mb-4"></div>
+            <div class="flex justify-between items-center">
+                <button id="cancel-order" class="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-lg transition-colors">Cancel Order</button>
+                <button id="submit-order" class="bg-gradient-to-r from-emerald-600 to-teal-500 hover:opacity-90 px-6 py-2 rounded-lg font-semibold transition-all" disabled>Submit Order (0 items)</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDZ4s72jcG6106XTZXDIbqSRPfJ3knmtgc",
+            authDomain: "maharjan-3aa09.firebaseapp.com",
+            projectId: "maharjan-3aa09",
+            storageBucket: "maharjan-3aa09.firebasestorage.app",
+            messagingSenderId: "356343505390",
+            appId: "1:356343505390:web:6277eda07d63c1d935eeff"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Globals
+        let allStudents = [];
+        let allMenu = [];
+        let selectedStudent = null;
+        let currentOrder = {};
+        let previousOrders = [];
+        let previousTotals = {};
+
+        // Lucide Icons
+        lucide.createIcons();
+
+        // Load Students
+        function loadStudents() {
+            const loading = document.getElementById('students-loading');
+            const grid = document.getElementById('students-grid');
+            loading.classList.remove('hidden');
+            grid.classList.add('hidden');
+
+            db.collection('students').onSnapshot((snapshot) => {
+                allStudents = [];
+                grid.innerHTML = '';
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    allStudents.push({ id: doc.id, ...data });
+                });
+                renderStudents(allStudents);
+                loading.classList.add('hidden');
+                grid.classList.remove('hidden');
+                lucide.createIcons();
+            });
+        }
+
+        // Render Students
+        function renderStudents(students) {
+            const grid = document.getElementById('students-grid');
+            grid.innerHTML = '';
+            students.forEach((student) => {
+                const initials = student.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                const card = document.createElement('div');
+                card.classList.add('glass', 'rounded-xl', 'p-4', 'text-center', 'hover:shadow-lg', 'transition-all', 'animate-fadeIn', 'cursor-pointer');
+                card.innerHTML = `
+                    <div class="w-16 h-16 avatar-gradient rounded-full mx-auto mb-3 flex items-center justify-center text-white font-bold text-lg">${initials}</div>
+                    <h3 class="font-semibold mb-1">${student.name}</h3>
+                    <p class="text-sm text-gray-300 mb-4">#${student.uniqueNo}</p>
+                    <button class="w-full bg-gradient-to-r from-emerald-600 to-teal-500 hover:opacity-90 py-3 rounded-lg font-semibold transition-all">ENTER</button>
+                `;
+                card.querySelector('button').addEventListener('click', () => selectStudent(student));
+                grid.appendChild(card);
+            });
+        }
+
+        // Select Student
+        async function selectStudent(student) {
+            selectedStudent = student;
+            document.getElementById('selected-student-name').textContent = student.name;
+            document.getElementById('selected-roll-no').textContent = student.uniqueNo;
+            document.getElementById('students-screen').classList.add('hidden');
+            document.getElementById('ordering-screen').classList.remove('hidden');
+            currentOrder = {};
+            previousOrders = [];
+            previousTotals = {};
+            try {
+                const snapshot = await db.collection('orders')
+                    .where('rollNo', '==', student.uniqueNo)
+                    .where('status', 'in', ['placed', 'served'])
+                    .orderBy('timestamp', 'desc')
+                    .get();
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const ord = { id: doc.id, status: data.status, items: data.items };
+                    previousOrders.push(ord);
+                    if (data.items) {
+                        for (const [foodName, qty] of Object.entries(data.items)) {
+                            if (qty > 0) {
+                                previousTotals[foodName] = (previousTotals[foodName] || 0) + qty;
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error fetching previous orders:', error);
+            }
+            loadMenu();
+            lucide.createIcons();
+        }
+
+        // Load Menu
+        function loadMenu() {
+            const loading = document.getElementById('foods-loading');
+            const grid = document.getElementById('foods-grid');
+            loading.classList.remove('hidden');
+            grid.classList.add('hidden');
+
+            db.collection('menu').onSnapshot((snapshot) => {
+                allMenu = [];
+                grid.innerHTML = '';
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    allMenu.push({ id: doc.id, ...data });
+                });
+                renderFoods(allMenu);
+                loading.classList.add('hidden');
+                grid.classList.remove('hidden');
+                updateOrderSummary();
+                lucide.createIcons();
+            });
+        }
+
+        // Render Foods
+        function renderFoods(foods) {
+            const grid = document.getElementById('foods-grid');
+            grid.innerHTML = '';
+            foods.forEach((food) => {
+                const totalOrdered = (previousTotals[food.name] || 0) + (currentOrder[food.name] || 0);
+                const card = document.createElement('div');
+                card.classList.add('glass', 'rounded-xl', 'p-4', 'hover:shadow-lg', 'transition-all', 'animate-fadeIn');
+                card.innerHTML = `
+                    <img src="${food.imageUrl}" alt="${food.name}" class="w-full h-32 object-cover rounded-lg mb-3">
+                    <h3 class="font-semibold mb-3">${food.name}</h3>
+                    <div class="flex items-center justify-between">
+                        <button onclick="updateQty('${food.name}', -1)" class="bg-gray-700 hover:bg-gray-600 p-2 rounded-lg transition-colors">-</button>
+                        <span class="font-mono text-lg">${totalOrdered} / ${food.limit}</span>
+                        <button onclick="updateQty('${food.name}', 1)" class="bg-gray-700 hover:bg-gray-600 p-2 rounded-lg transition-colors">+</button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // Update Quantity
+        function updateQty(foodName, delta) {
+            const food = allMenu.find(f => f.name === foodName);
+            if (!food) return;
+            const prev = previousTotals[foodName] || 0;
+            let curr = currentOrder[foodName] || 0;
+            const newCurr = Math.max(0, curr + delta);
+            const newTotal = prev + newCurr;
+            if (newTotal > food.limit) return;
+            currentOrder[foodName] = newCurr;
+            renderFoods(allMenu);
+            updateOrderSummary();
+        }
+
+        // Update Order Summary
+        function updateOrderSummary() {
+            const itemsDiv = document.getElementById('order-items');
+            itemsDiv.innerHTML = '';
+
+            // Previous Orders Section
+            if (previousOrders.length > 0) {
+                const prevHeader = document.createElement('h4');
+                prevHeader.className = 'font-semibold mb-2 text-gray-300';
+                prevHeader.innerHTML = 'Previous Orders';
+                itemsDiv.appendChild(prevHeader);
+
+                previousOrders.forEach((ord, idx) => {
+                    const ordDiv = document.createElement('div');
+                    ordDiv.className = 'bg-gray-800/50 p-3 rounded mb-3';
+                    let itemsHtml = '';
+                    Object.entries(ord.items || {}).forEach(([food, qty]) => {
+                        if (qty > 0) {
+                            itemsHtml += `<div class="flex justify-between text-sm"><span>${food}</span><span class="font-mono">${qty}x</span></div>`;
+                        }
+                    });
+                    if (itemsHtml) {
+                        ordDiv.innerHTML = `
+                            <div class="text-xs text-gray-400 mb-2">Order ${idx + 1} - <span class="capitalize">${ord.status}</span></div>
+                            <div>${itemsHtml}</div>
+                        `;
+                        itemsDiv.appendChild(ordDiv);
+                    }
+                });
+
+                const spacer = document.createElement('div');
+                spacer.className = 'my-4 border-t border-gray-600';
+                itemsDiv.appendChild(spacer);
+            }
+
+            // Current New Order Section
+            const currentHeader = document.createElement('h4');
+            currentHeader.className = 'font-semibold mb-2';
+            currentHeader.innerHTML = 'New Order';
+            itemsDiv.appendChild(currentHeader);
+
+            const currentItems = document.createElement('div');
+            currentItems.id = 'current-items';
+            currentItems.className = 'space-y-2';
+            itemsDiv.appendChild(currentItems);
+
+            let hasItems = false;
+            let itemCount = 0;
+            for (const [food, qty] of Object.entries(currentOrder)) {
+                if (qty > 0) {
+                    hasItems = true;
+                    itemCount += qty;
+                    const item = document.createElement('div');
+                    item.classList.add('flex', 'justify-between', 'text-sm');
+                    item.innerHTML = `<span>${food} x ${qty}</span><button onclick="updateQty('${food}', -${qty})" class="text-red-400 hover:text-red-300">Remove</button>`;
+                    currentItems.appendChild(item);
+                }
+            }
+
+            const submitBtn = document.getElementById('submit-order');
+            submitBtn.disabled = !hasItems;
+            submitBtn.textContent = `Submit Order (${itemCount} items)`;
+
+            if (!hasItems) {
+                const noItems = document.createElement('p');
+                noItems.className = 'text-gray-400 text-sm';
+                noItems.textContent = 'No new items added yet.';
+                currentItems.appendChild(noItems);
+            }
+        }
+
+        // Cancel Order
+        document.getElementById('cancel-order').addEventListener('click', () => {
+            currentOrder = {};
+            renderFoods(allMenu);
+            updateOrderSummary();
+        });
+
+        // Submit Order
+        document.getElementById('submit-order').addEventListener('click', async () => {
+            if (Object.values(currentOrder).reduce((a, b) => a + b, 0) === 0) return;
+
+            try {
+                await db.collection('orders').add({
+                    studentName: selectedStudent.name,
+                    rollNo: selectedStudent.uniqueNo,
+                    items: currentOrder,
+                    status: "placed",
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+                setTimeout(() => {
+                    currentOrder = {};
+                    document.getElementById('back-btn').click();
+                }, 2000);
+            } catch (error) {
+                alert('Error submitting order: ' + error.message);
+            }
+        });
+
+        // Back to Students
+        document.getElementById('back-btn').addEventListener('click', () => {
+            document.getElementById('ordering-screen').classList.add('hidden');
+            document.getElementById('students-screen').classList.remove('hidden');
+            selectedStudent = null;
+            currentOrder = {};
+            previousOrders = [];
+            previousTotals = {};
+        });
+
+        // Search Functionality
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filtered = allStudents.filter(s => 
+                s.name.toLowerCase().includes(query) || s.uniqueNo.toLowerCase().includes(query)
+            );
+            renderStudents(filtered);
+        });
+
+        // Initial Load
+        loadStudents();
+    </script>
+</body>
+</html>

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MAHRAJAN Hifz Da'wa 2025 — Smart Food Counter</title>
+
+  <!-- Google Fonts: Poppins + Amiri (beautiful Arabic font) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- AOS Animation Library -->
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+  <!-- Custom Tailwind Config + Islamic Pattern Background -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Poppins', 'sans-serif'],
+            arabic: ['Amiri', 'serif'],
+          },
+          colors: {
+            gold: '#D4AF37',
+            darkgold: '#B8860B',
+            midnight: '#0B0E17',
+          },
+        },
+      },
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #0B0E17;
+      background-image: url('https://assets.codepen.io/3837557/islamic-pattern-dark.png');
+      background-attachment: fixed;
+      background-size: 800px;
+      color: #e5e7eb;
+      font-family: 'Poppins', sans-serif;
+    }
+    .hero-bg {
+      background-image: linear-gradient(rgba(11, 14, 23, 0.85), rgba(11, 14, 23, 0.95)),
+                        url('https://images.unsplash.com/photo-1578662996442-48b2c1a59bd?ixlib=rb-4.0.3&auto=format&fit=crop&q=80');
+      background-size: cover;
+      background-position: center;
+    }
+    .glass {
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(212, 175, 55, 0.2);
+    }
+    .gold-glow {
+      box-shadow: 0 0 30px rgba(212, 175, 55, 0.4);
+    }
+    .pattern-overlay {
+      position: absolute;
+      inset: 0;
+      background-image: url('https://assets.codepen.io/3837557/islamic-pattern-gold-light.png');
+      opacity: 0.07;
+      pointer-events: none;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen text-gray-100">
+
+  <!-- Hero Section -->
+  <section class="hero-bg relative min-h-screen flex items-center justify-center overflow-hidden">
+    <div class="pattern-overlay"></div>
+    <div class="container mx-auto px-6 text-center relative z-10" data-aos="fade-down" data-aos-duration="1200">
+      <h1 class="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight">
+        <span class="text-gold">MAHRAJAN</span><br>
+        <span class="text-white">Hifz Da'wa</span><br>
+        <span class="text-4xl md:text-6xl lg:text-7xl text-gold">2025</span>
+      </h1>
+      <p class="text-2xl md:text-4xl font-light mb-10 text-gray-300" data-aos="fade-up" data-aos-delay="400">
+        Smart Food Counter System
+      </p>
+      <div class="flex flex-col sm:flex-row gap-6 justify-center mt-12" data-aos="zoom-in" data-aos-delay="800">
+        <a href="#menu" class="px-10 py-5 bg-gold text-midnight font-semibold text-lg rounded-full hover:bg-yellow-500 transition transform hover:scale-105 shadow-2xl">
+          View Menu
+        </a>
+        <a href="#how-it-works" class="px-10 py-5 border-2 border-gold text-gold font-semibold text-lg rounded-full hover:bg-gold hover:text-midnight transition transform hover:scale-105">
+          How It Works
+        </a>
+        <a href="#about" class="px-10 py-5 bg-transparent border border-gold text-gold font-semibold text-lg rounded-full hover:bg-gold/20 transition transform hover:scale-105 backdrop-blur-sm">
+          About the Festival
+        </a>
+      </div>
+    </div>
+    <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce">
+      <svg class="w-10 h-10 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+      </svg>
+    </div>
+  </section>
+
+  <!-- About the Food Counter -->
+  <section id="about" class="py-20 px-6 relative">
+    <div class="container mx-auto max-w-5xl">
+      <h2 class="text-4xl md:text-5xl font-bold text-center mb-16 text-gold" data-aos="fade-up">
+        About the Smart Food Counter System
+      </h2>
+      <div class="grid md:grid-cols-2 gap-12 items-center">
+        <div data-aos="fade-right>
+          <p class="text-lg leading-relaxed text-gray-300">
+            This year, <span class="text-gold font-semibold">MAHRAJAN Hifz Da'wa 2025</span> introduces a fully digital and smart food distribution system designed to make your experience seamless, fast, and organized.
+          </p>
+          <ul class="mt-8 space-y-4 text-gray-200">
+            <li class="flex items-center gap-4"><span class="text-gold text-2xl">✓</span> Students visit the Food Counter and provide their student number</li>
+            <li class="flex items-center gap-4"><span class="text-gold text-2xl">📱</span> Kitchen receives orders instantly on live display</li>
+            <li class="flex items-center gap-4"><span class="text-gold text-2xl">🔒</span> Admin controls item limits & prevents over-ordering</li>
+            <li class="flex items-center gap-4"><span class="text-gold text-2xl">⚡</span> Zero confusion, zero long queues, maximum efficiency</li>
+          </ul>
+        </div>
+        <div data-aos="fade-left class="relative">
+          <div class="glass rounded-3xl p-12 text-center gold-glow">
+            <div class="text-7xl mb-6">🍽️</div>
+            <h3 class="text-2xl font-bold text-gold mb-4">Fast • Fair • Digital</h3>
+            <p class="text-gray-300">Every meal served with precision and care</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How to Get Food - 3 Steps -->
+  <section id="how-it-works" class="py-20 px-6 bg-midnight/60">
+    <div class="container mx-auto max-w-6xl">
+      <h2 class="text-4xl md:text-5xl font-bold text-center mb-20 text-gold" data-aos="fade-up">
+        How to Get Your Food in 3 Simple Steps
+      </h2>
+      <div class="grid md:grid-cols-3 gap-10">
+        <!-- Step 1 -->
+        <div class="text-center" data-aos="zoom-in" data-aos-delay="100">
+          <div class="w-32 h-32 mx-auto mb-8 rounded-full bg-gradient-to-br from-gold to-darkgold flex items-center justify-center text-6xl shadow-2xl">
+            1
+          </div>
+          <h3 class="text-2xl font-bold mb-4 text-gold">Go to Food Counter</h3>
+          <p class="text-gray-300 leading-relaxed">
+            Visit the official <strong>Food Counter</strong> inside the MAHRAJAN venue and give your <strong>student number</strong>.
+          </p>
+        </div>
+        <!-- Step 2 -->
+        <div class="text-center" data-aos="zoom-in" data-aos-delay="300">
+          <div class="w-32 h-32 mx-auto mb-8 rounded-full bg-gradient-to-br from-gold to-darkgold flex items-center justify-center text-6xl shadow-2xl">
+            2
+          </div>
+          <h3 class="text-2xl font-bold mb-4 text-gold">Place Your Order</h3>
+          <p class="text-gray-300 leading-relaxed">
+            The counter operator will check item availability & limits, then place your order instantly.
+          </p>
+        </div>
+        <!-- Step 3 -->
+        <div class="text-center" data-aos="zoom-in" data-aos-delay="500">
+          <div class="w-32 h-32 mx-auto mb-8 rounded-full bg-gradient-to-br from-gold to-darkgold flex items-center justify-center text-6xl shadow-2xl">
+            3
+          </div>
+          <h3 class="text-2xl font-bold mb-4 text-gold">Collect When Ready</h3>
+          <p class="text-gray-300 leading-relaxed">
+            Your order appears on the Kitchen Display Panel. Collect your meal as soon as it's ready!
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Grid (Glassmorphism Cards) -->
+  <section class="py-20 px-6">
+    <div class="container mx-auto max-w-6xl">
+      <h2 class="text-4xl md:text-5xl font-bold text-center mb-16 text-gold" data-aos="fade-up">
+        System Features
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="glass rounded-2xl p-8 text-center hover:scale-105 transition transform gold-glow" data-aos="fade-up" data-aos-delay="100">
+          <div class="text-6xl mb-4">🔔</div>
+          <h3 class="text-xl font-bold text-gold mb-3">Live Kitchen Display</h3>
+          <p class="text-gray-400">Kitchen staff see every order in real-time</p>
+        </div>
+        <div class="glass rounded-2xl p-8 text-center hover:scale-105 transition transform gold-glow" data-aos="fade-up" data-aos-delay="200">
+          <div class="text-6xl mb-4">✔️</div>
+          <h3 class="text-xl font-bold text-gold mb-3">Real-time Serving</h3>
+          <p class="text-gray-400">No delays, no missed orders</p>
+        </div>
+        <div class="glass rounded-2xl p-8 text-center hover:scale-105 transition transform gold-glow" data-aos="fade-up" data-aos-delay="300">
+          <div class="text-6xl mb-4">📦</div>
+          <h3 class="text-xl font-bold text-gold mb-3">Item Limit Control</h3>
+          <p class="text-gray-400">Fair distribution for all students</p>
+        </div>
+        <div class="glass rounded-2xl p-8 text-center hover:scale-105 transition transform gold-glow" data-aos="fade-up" data-aos-delay="400">
+          <div class="text-6xl mb-4">🚫</div>
+          <h3 class="text-xl font-bold text-gold mb-3">Auto Sold-Out Lock</h3>
+          <p class="text-gray-400">Items automatically locked when finished</p>
+        </div>
+        <div class="glass rounded-2xl p-8 text-center hover:scale-105 transition transform gold-glow" data-aos="fade-up" data-aos-delay="500">
+          <div class="text-6xl mb-4">📊</div>
+          <h3 class="text-xl font-bold text-gold mb-3">Smart Summary Dashboard</h3>
+          <p class="text-gray-400">Admins monitor everything live</p>
+        </div>
+        <div class="glass rounded-2xl p-8 text-center hover:scale-105 transition transform gold-glow" data-aos="fade-up" data-aos-delay="600">
+          <div class="text-6xl mb-4">📱</div>
+          <h3 class="text-xl font-bold text-gold mb-3">Works on All Devices</h3>
+          <p class="text-gray-400">Phones, tablets, laptops — fully responsive</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Why This System -->
+  <section class="py-20 px-6 bg-gradient-to-b from-transparent to-midnight">
+    <div class="container mx-auto max-w-4xl text-center">
+      <h2 class="text-4xl md:text-5xl font-bold mb-10 text-gold" data-aos="fade-up">
+        Why We Built This System
+      </h2>
+      <p class="text-xl leading-relaxed text-gray-300" data-aos="fade-up" data-aos-delay="200">
+        This smart food counter ensures <span class="text-gold font-semibold">smooth distribution</span>, 
+        <span class="text-gold font-semibold">prevents crowding</span>, avoids item shortages, eliminates confusion, 
+        and keeps the entire process <span class="text-gold font-semibold">organized, fast, and fair</span> for every student attending MAHRAJAN Hifz Da'wa 2025.
+      </p>
+    </div>
+  </section>
+
+  <!-- Contact / Support -->
+  <section class="py-16 px-6 bg-midnight">
+    <div class="container mx-auto text-center">
+      <h2 class="text-3xl md:text-4xl font-bold mb-8 text-gold" data-aos="fade-up">
+        Need Help?
+      </h2>
+      <p class="text-xl text-gray-300 mb-8" data-aos="fade-up" data-aos-delay="200">
+        For any food counter issues, please visit the <strong>Food Counter Desk</strong> or speak to any event coordinator wearing a gold badge.
+      </p>
+      <p class="text-lg text-gray-400">
+        We're here to serve you with excellence ✨
+      </p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="py-12 px-6 border-t-2 border-gold/30">
+    <div class="container mx-auto text-center">
+      <h3 class="text-2xl font-bold text-gold mb-2">MAHRAJAN Hifz Da'wa 2025</h3>
+      <p class="text-gray-400">Smart Food Counter System • Developed by ❤️ Mohammed Muzammil</p>
+      <div class="mt-6 h-px bg-gradient-to-r from-transparent via-gold to-transparent w-64 mx-auto"></div>
+      <p class="text-sm text-gray-500 mt-6">© 2025 All Rights Reserved</p>
+    </div>
+  </footer>
+
+  <!-- Initialize AOS -->
+  <script> 
+
+    AOS.init({
+      once: true,
+      duration: 1000,
+      easing: 'ease-out-cubic'
+    });
+
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          window.scrollTo({
+            top: target.offsetTop - 80,
+            behavior: 'smooth'
+          });
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>

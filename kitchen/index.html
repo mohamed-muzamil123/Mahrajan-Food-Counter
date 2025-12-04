@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canteen Kitchen Live Display Panel – 2025 Premium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fadeIn { animation: fadeIn 0.5s ease-out; }
+        .animate-slideOut { animation: fadeIn 0.3s ease-in reverse; }
+        .hover-lift { transition: all 0.3s ease; }
+        .hover-lift:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen overflow-x-hidden">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 p-4 md:p-6 shadow-2xl">
+        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center text-center md:text-left">
+            <h1 class="text-2xl md:text-4xl font-bold mb-2 md:mb-0">KITCHEN LIVE ORDERS</h1>
+            <div class="text-lg md:text-xl font-semibold text-white/90">
+                Active Orders: <span id="order-count">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Orders Container -->
+    <div class="container mx-auto px-4 py-6 max-w-6xl">
+        <div id="orders-container" class="space-y-4 mb-8"></div>
+        <div id="no-orders" class="text-center py-12 text-gray-400 hidden">
+            <i data-lucide="clipboard-list" class="w-16 h-16 mx-auto mb-4 opacity-50"></i>
+            <p class="text-xl">No active orders</p>
+            <p class="text-sm">Kitchen is ready!</p>
+        </div>
+    </div>
+
+    <!-- Preparing Summary -->
+    <div id="preparing-summary" class="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-gray-800 to-gray-900 p-4 text-center text-sm md:text-base font-medium glass border-t border-white/10 hidden">
+        Preparing: <span id="summary-text"></span>
+    </div>
+
+    <script>
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDZ4s72jcG6106XTZXDIbqSRPfJ3knmtgc",
+            authDomain: "maharjan-3aa09.firebaseapp.com",
+            projectId: "maharjan-3aa09",
+            storageBucket: "maharjan-3aa09.firebasestorage.app",
+            messagingSenderId: "356343505390",
+            appId: "1:356343505390:web:6277eda07d63c1d935eeff"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Globals
+        let activeOrders = [];
+        let lastOrderCount = 0;
+        let audioCtx = null;
+        let unsubscribe = null;
+
+        // Start listener
+        function startListener() {
+            if (unsubscribe) unsubscribe();
+            unsubscribe = db.collection('orders')
+                .where('status', '==', 'placed')
+                .orderBy('timestamp')
+                .onSnapshot((snapshot) => {
+                    activeOrders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderOrders();
+                    const count = activeOrders.length;
+                    document.getElementById('order-count').textContent = count;
+                    if (count > lastOrderCount) {
+                        playBell();
+                    }
+                    lastOrderCount = count;
+                    if (count >= 5) {
+                        playUrgent();
+                    }
+                    renderSummary();
+                }, (error) => {
+                    console.error('Error listening to orders:', error);
+                });
+        }
+
+        // Initial start
+        startListener();
+
+        // Lucide Icons
+        lucide.createIcons();
+
+        // Render Orders
+        function renderOrders() {
+            const container = document.getElementById('orders-container');
+            const noOrders = document.getElementById('no-orders');
+            container.innerHTML = '';
+            if (activeOrders.length === 0) {
+                noOrders.classList.remove('hidden');
+                document.getElementById('preparing-summary').classList.add('hidden');
+                return;
+            }
+            noOrders.classList.add('hidden');
+            activeOrders.forEach((order, index) => {
+                const card = createOrderCard(order, index + 1);
+                container.appendChild(card);
+            });
+            document.getElementById('preparing-summary').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        // Create Order Card
+        function createOrderCard(order, num) {
+            const div = document.createElement('div');
+            div.className = 'glass rounded-xl p-6 hover-lift animate-fadeIn';
+            const validItems = Object.entries(order.items || {}).filter(([_, qty]) => qty > 0);
+            div.innerHTML = `
+                <div class="flex justify-end mb-4">
+                    <span class="bg-yellow-500 text-black px-3 py-1 rounded-full text-sm font-semibold">Order #${num}</span>
+                </div>
+                <div class="mb-4">
+                    <h3 class="font-semibold text-lg mb-1">${order.studentName}</h3>
+                    <p class="text-gray-400">#${order.rollNo}</p>
+                </div>
+                <ul class="mb-4 space-y-1">
+                    ${validItems.map(([food, qty]) => `<li class="flex justify-between"><span>${food}</span><span class="font-mono">${qty}x</span></li>`).join('')}
+                </ul>
+                <div class="flex space-x-3">
+                    <button class="served-btn flex-1 bg-green-600 hover:bg-green-500 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center">
+                        <i data-lucide="check-circle" class="w-4 h-4 mr-2"></i>SERVED
+                    </button>
+                    <button class="cancel-btn bg-red-600 hover:bg-red-500 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center">
+                        <i data-lucide="x-circle" class="w-4 h-4 mr-2"></i>CANCEL
+                    </button>
+                </div>
+            `;
+            div.querySelector('.served-btn').addEventListener('click', () => serveOrder(order.id));
+            div.querySelector('.cancel-btn').addEventListener('click', () => cancelOrder(order.id));
+            return div;
+        }
+
+        // Serve Order
+        async function serveOrder(id) {
+            try {
+                await db.collection('orders').doc(id).update({ status: 'served' });
+                confetti({
+                    particleCount: 50,
+                    spread: 60,
+                    origin: { y: 0.7 }
+                });
+            } catch (error) {
+                console.error('Error serving order:', error);
+            }
+        }
+
+        // Cancel Order
+        async function cancelOrder(id) {
+            if (confirm('Cancel this order?')) {
+                try {
+                    await db.collection('orders').doc(id).update({ status: 'cancelled' });
+                } catch (error) {
+                    console.error('Error cancelling order:', error);
+                }
+            }
+        }
+
+        // Render Summary
+        function renderSummary() {
+            const summary = {};
+            activeOrders.forEach(order => {
+                Object.entries(order.items || {}).forEach(([food, qty]) => {
+                    if (qty > 0) {
+                        summary[food] = (summary[food] || 0) + qty;
+                    }
+                });
+            });
+            const text = Object.entries(summary).map(([food, qty]) => `${qty} ${food}`).join(' • ');
+            document.getElementById('summary-text').textContent = text || 'No items preparing';
+        }
+
+        // Play Bell Sound
+        function playBell() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.3);
+            const gainNode = audioCtx.createGain();
+            gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.3);
+        }
+
+        // Play Urgent Tone
+        function playUrgent() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    const oscillator = audioCtx.createOscillator();
+                    oscillator.type = 'square';
+                    oscillator.frequency.value = 200 + i * 100;
+                    const gainNode = audioCtx.createGain();
+                    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    oscillator.start();
+                    oscillator.stop(audioCtx.currentTime + 0.2);
+                }, i * 200);
+            }
+        }
+    </script>
+</body>
+</html>

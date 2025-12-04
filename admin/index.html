@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Mess - Admin Panel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      .glass {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .animate-fadeIn {
+        animation: fadeIn 0.3s ease-out;
+      }
+      .animate-spin {
+        animation: spin 1s linear infinite;
+      }
+      .loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+      }
+      .print-only {
+        display: none;
+      }
+      @media print {
+        .no-print {
+          display: none !important;
+        }
+        .print-only {
+          display: block !important;
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-900 text-white min-h-screen">
+    <!-- Header -->
+    <header
+      class="bg-gradient-to-r from-purple-600 via-purple-500 to-pink-500 p-4 md:p-6 shadow-lg"
+    >
+      <div
+        class="container mx-auto flex flex-col md:flex-row justify-between items-center"
+      >
+        <h1 class="text-2xl md:text-3xl font-bold mb-2 md:mb-0">
+          Smart Mess – Admin Panel
+        </h1>
+        <div
+          id="datetime"
+          class="text-sm md:text-base font-medium opacity-90"
+        ></div>
+      </div>
+    </header>
+
+    <div class="container mx-auto px-4 py-6">
+      <!-- Tabs -->
+      <div class="flex bg-gray-800 rounded-lg overflow-hidden mb-6 glass">
+        <button
+          id="tab-students"
+          class="tab-btn flex-1 py-3 px-4 font-medium bg-purple-600 text-white transition-all duration-300 hover:bg-purple-700"
+        >
+          Manage Students
+        </button>
+        <button
+          id="tab-menu"
+          class="tab-btn flex-1 py-3 px-4 font-medium text-gray-300 hover:bg-gray-700 transition-all duration-300"
+        >
+          Manage Food Menu
+        </button>
+      </div>
+
+      <!-- Manage Students Tab -->
+      <div id="section-students" class="tab-section">
+        <!-- Add Student Card -->
+        <div
+          class="fixed md:static top-4 right-4 md:top-auto md:right-auto w-full md:w-96 z-10 glass rounded-xl p-6 shadow-xl animate-fadeIn md:mb-6"
+        >
+          <h2 class="text-xl font-semibold mb-4 flex items-center">
+            <i data-lucide="user-plus" class="w-5 h-5 mr-2"></i>Add Student
+          </h2>
+          <form id="add-student-form">
+            <input
+              type="text"
+              id="student-name"
+              placeholder="Full Name"
+              class="w-full p-3 mb-3 bg-white/10 rounded-lg border border-white/20 text-white placeholder-gray-300 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 transition-all"
+              required
+            />
+            <input
+              type="text"
+              id="student-unique"
+              placeholder="Unique Number (e.g., Roll No)"
+              class="w-full p-3 mb-4 bg-white/10 rounded-lg border border-white/20 text-white placeholder-gray-300 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 transition-all"
+              required
+            />
+            <button
+              type="submit"
+              class="w-full bg-gradient-to-r from-purple-600 to-pink-500 text-white py-3 rounded-lg font-medium hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-purple-500/25"
+            >
+              + Add Student
+            </button>
+          </form>
+        </div>
+
+        <!-- Students Table -->
+        <div class="overflow-x-auto animate-fadeIn">
+          <div
+            id="students-loading"
+            class="text-center py-8 text-gray-400 flex items-center justify-center"
+          >
+            <span class="loading mr-2"></span>Loading students...
+          </div>
+          <table
+            id="students-table"
+            class="w-full bg-gray-800 rounded-lg overflow-hidden glass hidden"
+          >
+            <thead class="bg-gray-700">
+              <tr>
+                <th class="p-3 text-left font-semibold">No.</th>
+                <th class="p-3 text-left font-semibold">Name</th>
+                <th class="p-3 text-left font-semibold">Unique Number</th>
+                <th class="p-3 text-left font-semibold">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="students-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Manage Food Menu Tab -->
+      <div id="section-menu" class="tab-section hidden">
+        <!-- Add Food Card -->
+        <div
+          class="fixed md:static top-4 right-4 md:top-auto md:right-auto w-full md:w-96 z-10 glass rounded-xl p-6 shadow-xl animate-fadeIn md:mb-6"
+        >
+          <h2 class="text-xl font-semibold mb-4 flex items-center">
+            <i data-lucide="plus-circle" class="w-5 h-5 mr-2"></i>Add Food Item
+          </h2>
+          <form id="add-food-form">
+            <input
+              type="text"
+              id="food-name"
+              placeholder="Food Name (e.g., Dal Rice)"
+              class="w-full p-3 mb-3 bg-white/10 rounded-lg border border-white/20 text-white placeholder-gray-300 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 transition-all"
+              required
+            />
+            <input
+              type="url"
+              id="food-image"
+              placeholder="Image URL (e.g., https://example.com/image.jpg)"
+              class="w-full p-3 mb-3 bg-white/10 rounded-lg border border-white/20 text-white placeholder-gray-300 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 transition-all"
+              required
+            />
+            <img
+              id="image-preview"
+              class="w-full h-32 object-cover rounded mb-3 hidden bg-gray-700"
+              alt="Preview"
+            />
+            <input
+              type="number"
+              id="food-limit"
+              placeholder="Quantity Limit"
+              value="1"
+              min="1"
+              class="w-full p-3 mb-4 bg-white/10 rounded-lg border border-white/20 text-white placeholder-gray-300 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 transition-all"
+              required
+            />
+            <button
+              type="submit"
+              class="w-full bg-gradient-to-r from-purple-600 to-pink-500 text-white py-3 rounded-lg font-medium hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-purple-500/25"
+            >
+              + Add Food Item
+            </button>
+          </form>
+        </div>
+
+        <!-- Food Grid -->
+        <div
+          id="menu-loading"
+          class="text-center py-8 text-gray-400 flex items-center justify-center"
+        >
+          <span class="loading mr-2"></span>Loading menu...
+        </div>
+        <div
+          id="food-grid"
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 hidden"
+        ></div>
+      </div>
+    </div>
+
+    <!-- Fixed Export Button -->
+    <button
+      id="export-btn"
+      class="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 bg-gradient-to-r from-emerald-600 to-cyan-500 text-white py-3 rounded-lg font-medium shadow-lg hover:opacity-90 transition-all duration-300 no-print z-20 flex items-center justify-center"
+    >
+      <i data-lucide="printer" class="w-5 h-5 mr-2"></i>Export & Print Today’s
+      Orders
+    </button>
+
+    <script>
+      // Firebase Config
+      const firebaseConfig = {
+        apiKey: "AIzaSyDZ4s72jcG6106XTZXDIbqSRPfJ3knmtgc",
+        authDomain: "maharjan-3aa09.firebaseapp.com",
+        projectId: "maharjan-3aa09",
+        storageBucket: "maharjan-3aa09.firebasestorage.app",
+        messagingSenderId: "356343505390",
+        appId: "1:356343505390:web:6277eda07d63c1d935eeff",
+      };
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+      // Lucide Icons
+      lucide.createIcons();
+      // Tab Management
+      const tabStudents = document.getElementById("tab-students");
+      const tabMenu = document.getElementById("tab-menu");
+      const sectionStudents = document.getElementById("section-students");
+      const sectionMenu = document.getElementById("section-menu");
+      function showStudents() {
+        sectionStudents.classList.remove("hidden");
+        sectionMenu.classList.add("hidden");
+        tabStudents.classList.add("bg-purple-600", "text-white");
+        tabStudents.classList.remove("text-gray-300", "hover:bg-gray-700");
+        tabMenu.classList.remove("bg-purple-600", "text-white");
+        tabMenu.classList.add("text-gray-300", "hover:bg-gray-700");
+      }
+      function showMenu() {
+        sectionStudents.classList.add("hidden");
+        sectionMenu.classList.remove("hidden");
+        tabMenu.classList.add("bg-purple-600", "text-white");
+        tabMenu.classList.remove("text-gray-300", "hover:bg-gray-700");
+        tabStudents.classList.remove("bg-purple-600", "text-white");
+        tabStudents.classList.add("text-gray-300", "hover:bg-gray-700");
+      }
+      tabStudents.addEventListener("click", showStudents);
+      tabMenu.addEventListener("click", showMenu);
+      // Load Students
+      window.students = window.students || [];
+      function loadStudents() {
+        const loading = document.getElementById("students-loading");
+        const table = document.getElementById("students-table");
+        loading.classList.remove("hidden");
+        table.classList.add("hidden");
+        db.collection("students").onSnapshot(
+          (snapshot) => {
+            window.students = [];
+            const tbody = document.getElementById("students-tbody");
+            tbody.innerHTML = "";
+            snapshot.forEach((doc, index) => {
+              const data = doc.data();
+              window.students.push({ id: doc.id, ...data });
+              const row = document.createElement("tr");
+              row.classList.add(
+                "hover:bg-gray-700/50",
+                "transition-colors",
+                "animate-fadeIn"
+              );
+              row.innerHTML = `
+                    <td class="p-3 font-medium">${index + 1}</td>
+                    <td class="p-3">${data.name}</td>
+                    <td class="p-3 font-mono text-purple-300">${
+                      data.uniqueNo
+                    }</td>
+                    <td class="p-3">
+                        <button onclick="deleteStudent('${
+                          doc.id
+                        }')" class="text-red-400 hover:text-red-300 p-1 rounded transition-colors" title="Delete Student">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </td>
+                `;
+              tbody.appendChild(row);
+            });
+            loading.classList.add("hidden");
+            table.classList.remove("hidden");
+            lucide.createIcons();
+          },
+          (error) => {
+            console.error("Error loading students:", error);
+            loading.innerHTML =
+              '<span class="text-red-400">Error loading data. Check connection.</span>';
+          }
+        );
+      }
+      // Add Student
+      document
+        .getElementById("add-student-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const name = document.getElementById("student-name").value.trim();
+          const uniqueNo = document
+            .getElementById("student-unique")
+            .value.trim();
+          if (!name || !uniqueNo) return;
+          // Check uniqueness
+          try {
+            const existing = await db
+              .collection("students")
+              .where("uniqueNo", "==", uniqueNo)
+              .get();
+            if (!existing.empty) {
+              alert("Unique Number already exists!");
+              return;
+            }
+            await db.collection("students").add({ name, uniqueNo });
+            document.getElementById("add-student-form").reset();
+            // Optional: Show success toast instead of alert for better UX
+            const successMsg = document.createElement("div");
+            successMsg.className =
+              "fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-fadeIn";
+            successMsg.textContent = "Student added successfully!";
+            document.body.appendChild(successMsg);
+            setTimeout(() => successMsg.remove(), 3000);
+          } catch (error) {
+            console.error("Error adding student:", error);
+            alert("Error adding student: " + error.message);
+          }
+        });
+      // Delete Student
+      async function deleteStudent(id) {
+        if (
+          confirm(
+            "Are you sure you want to delete this student? This action cannot be undone."
+          )
+        ) {
+          try {
+            await db.collection("students").doc(id).delete();
+            // Success feedback
+            const successMsg = document.createElement("div");
+            successMsg.className =
+              "fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-fadeIn";
+            successMsg.textContent = "Student deleted successfully!";
+            document.body.appendChild(successMsg);
+            setTimeout(() => successMsg.remove(), 3000);
+          } catch (error) {
+            console.error("Error deleting student:", error);
+            alert("Error deleting student: " + error.message);
+          }
+        }
+      }
+      // Load Menu
+      let menuItems = [];
+      function loadMenu() {
+        const loading = document.getElementById("menu-loading");
+        const grid = document.getElementById("food-grid");
+        loading.classList.remove("hidden");
+        grid.classList.add("hidden");
+        db.collection("menu").onSnapshot(
+          (snapshot) => {
+            menuItems = [];
+            grid.innerHTML = "";
+            snapshot.forEach((doc) => {
+              const data = doc.data();
+              menuItems.push({ id: doc.id, ...data });
+              const card = document.createElement("div");
+              card.classList.add(
+                "glass",
+                "rounded-xl",
+                "p-4",
+                "shadow-xl",
+                "hover:shadow-purple-500/25",
+                "transition-all",
+                "animate-fadeIn",
+                "overflow-hidden"
+              );
+              card.innerHTML = `
+                    <img src="${data.imageUrl}" alt="${data.name}" class="w-full h-32 object-cover rounded-lg mb-3 transition-transform hover:scale-105">
+                    <h3 class="font-semibold mb-2 text-lg">${data.name}</h3>
+                    <p class="text-sm text-gray-300 mb-4">Limit: <span class="font-mono text-purple-300">${data.limit}</span></p>
+                    <div class="flex space-x-2">
+                        <button onclick="editLimit('${doc.id}')" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-2 px-3 rounded text-sm font-medium transition-all duration-300">
+                            <i data-lucide="edit" class="w-4 h-4 mr-1 inline"></i>Edit Limit
+                        </button>
+                        <button onclick="deleteFood('${doc.id}')" class="bg-red-600 hover:bg-red-500 text-white py-2 px-3 rounded text-sm font-medium transition-all duration-300">
+                            <i data-lucide="trash-2" class="w-4 h-4 inline"></i>Delete
+                        </button>
+                    </div>
+                `;
+              grid.appendChild(card);
+            });
+            loading.classList.add("hidden");
+            grid.classList.remove("hidden");
+            lucide.createIcons();
+          },
+          (error) => {
+            console.error("Error loading menu:", error);
+            loading.innerHTML =
+              '<span class="text-red-400">Error loading menu. Check connection.</span>';
+          }
+        );
+      }
+      // Image Preview
+      document.getElementById("food-image").addEventListener("input", (e) => {
+        const preview = document.getElementById("image-preview");
+        if (e.target.value) {
+          preview.src = e.target.value;
+          preview.classList.remove("hidden");
+          preview.classList.add("animate-fadeIn");
+        } else {
+          preview.classList.add("hidden");
+        }
+      });
+      // Add Food
+      document
+        .getElementById("add-food-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const name = document.getElementById("food-name").value.trim();
+          const imageUrl = document.getElementById("food-image").value.trim();
+          const limit =
+            parseInt(document.getElementById("food-limit").value) || 1;
+          if (!name || !imageUrl) return;
+          try {
+            await db.collection("menu").add({ name, imageUrl, limit });
+            document.getElementById("add-food-form").reset();
+            document.getElementById("image-preview").classList.add("hidden");
+            const successMsg = document.createElement("div");
+            successMsg.className =
+              "fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-fadeIn";
+            successMsg.textContent = "Food item added successfully!";
+            document.body.appendChild(successMsg);
+            setTimeout(() => successMsg.remove(), 3000);
+          } catch (error) {
+            console.error("Error adding food item:", error);
+            alert("Error adding food item: " + error.message);
+          }
+        });
+      // Edit Limit
+      async function editLimit(id) {
+        const newLimit = prompt("Enter new quantity limit (minimum 1):", "1");
+        if (newLimit !== null && !isNaN(newLimit) && parseInt(newLimit) >= 1) {
+          try {
+            await db
+              .collection("menu")
+              .doc(id)
+              .update({ limit: parseInt(newLimit) });
+            const successMsg = document.createElement("div");
+            successMsg.className =
+              "fixed top-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-fadeIn";
+            successMsg.textContent = "Limit updated successfully!";
+            document.body.appendChild(successMsg);
+            setTimeout(() => successMsg.remove(), 3000);
+          } catch (error) {
+            console.error("Error updating limit:", error);
+            alert("Error updating limit: " + error.message);
+          }
+        }
+      }
+      // Delete Food
+      async function deleteFood(id) {
+        if (
+          confirm(
+            "Are you sure you want to delete this food item? This action cannot be undone."
+          )
+        ) {
+          try {
+            await db.collection("menu").doc(id).delete();
+            const successMsg = document.createElement("div");
+            successMsg.className =
+              "fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-fadeIn";
+            successMsg.textContent = "Food item deleted successfully!";
+            document.body.appendChild(successMsg);
+            setTimeout(() => successMsg.remove(), 3000);
+          } catch (error) {
+            console.error("Error deleting food item:", error);
+            alert("Error deleting food item: " + error.message);
+          }
+        }
+      }
+      // Export & Print
+      document
+        .getElementById("export-btn")
+        .addEventListener("click", async () => {
+          let servedOrders = [];
+          try {
+            const snapshot = await db
+              .collection("orders")
+              .where("status", "==", "served")
+              .get();
+            snapshot.forEach((doc) => {
+              const data = doc.data();
+              if (data.status !== "cancelled") {
+                servedOrders.push({ id: doc.id, ...data });
+              }
+            });
+          } catch (error) {
+            console.error("Error fetching orders:", error);
+            alert("Error fetching orders: " + error.message);
+            return;
+          }
+          // Aggregate per student
+          const studentTotals = {};
+          servedOrders.forEach((order) => {
+            const roll = order.rollNo;
+            if (!studentTotals[roll]) {
+              const student = window.students.find((s) => s.uniqueNo === roll);
+              studentTotals[roll] = {
+                name: student ? student.name : "Unknown",
+                uniqueNo: roll,
+                items: {},
+              };
+            }
+            Object.entries(order.items || {}).forEach(([food, qty]) => {
+              if (qty > 0) {
+                studentTotals[roll].items[food] =
+                  (studentTotals[roll].items[food] || 0) + parseInt(qty);
+              }
+            });
+          });
+          // Kitchen summary
+          const kitchenSummary = {};
+          servedOrders.forEach((order) => {
+            Object.entries(order.items || {}).forEach(([food, qty]) => {
+              if (qty > 0) {
+                kitchenSummary[food] =
+                  (kitchenSummary[food] || 0) + parseInt(qty);
+              }
+            });
+          });
+          // Build student rows
+          let studentRows = "";
+          Object.values(studentTotals).forEach((s) => {
+            if (Object.keys(s.items).length > 0) {
+              const itemsStr = Object.entries(s.items)
+                .map(([food, qty]) => food + " x " + qty)
+                .join(", ");
+              studentRows +=
+                "<tr><td>" +
+                s.name +
+                "</td><td>" +
+                s.uniqueNo +
+                "</td><td>" +
+                itemsStr +
+                "</td></tr>";
+            }
+          });
+          // Build kitchen rows
+          let kitchenRows = "";
+          Object.entries(kitchenSummary).forEach(([food, qty]) => {
+            if (qty > 0) {
+              kitchenRows +=
+                "<tr><td>" + food + "</td><td>" + qty + "</td></tr>";
+            }
+          });
+
+          const printWindow = window.open(
+            "",
+            "_blank",
+            "width=800,height=600,scrollbars=yes"
+          );
+          printWindow.document.write(printHTML);
+          printWindow.document.close();
+        });
+      // Initial Loads
+      showStudents(); // Ensure initial tab state
+      loadStudents();
+      loadMenu();
+    </script>
+  </body>
+</html>
