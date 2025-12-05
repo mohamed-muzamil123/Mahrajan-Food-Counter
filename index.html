@@ -66,41 +66,104 @@
       opacity: 0.07;
       pointer-events: none;
     }
+
+    /* Existing styles remain unchanged... */
+
+  @keyframes logoPop {
+    0% { 
+      opacity: 0; 
+      transform: scale(0) rotate(0deg); 
+    }
+    70% { 
+      opacity: 1; 
+      transform: scale(1.25) rotate(5deg); 
+    }
+    100% { 
+      opacity: 1; 
+      transform: scale(1) rotate(0deg); 
+    }
+  }
+
+  .animate-logoPop {
+    animation: logoPop 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  .gold-glow-logo {
+    box-shadow: 
+      0 0 40px rgba(212, 175, 55, 0.5),
+      0 0 80px rgba(212, 175, 55, 0.3),
+      inset 0 0 30px rgba(212, 175, 55, 0.15);
+  }
+
+  /* Enhanced hover glow */
+  .gold-glow-logo:hover {
+    box-shadow: 
+      0 0 60px rgba(212, 175, 55, 0.7),
+      0 0 120px rgba(212, 175, 55, 0.4),
+      inset 0 0 40px rgba(212, 175, 55, 0.25);
+  }
   </style>
 </head>
 
 <body class="min-h-screen text-gray-100">
 
-  <!-- Hero Section -->
-  <section class="hero-bg relative min-h-screen flex items-center justify-center overflow-hidden">
-    <div class="pattern-overlay"></div>
-    <div class="container mx-auto px-6 text-center relative z-10" data-aos="fade-down" data-aos-duration="1200">
-      <h1 class="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight">
-        <span class="text-gold">MAHRAJAN</span><br>
-        <span class="text-white">Hifz Da'wa</span><br>
-        <span class="text-4xl md:text-6xl lg:text-7xl text-gold">2025</span>
-      </h1>
-      <p class="text-2xl md:text-4xl font-light mb-10 text-gray-300" data-aos="fade-up" data-aos-delay="400">
-        Smart Food Counter System
-      </p>
-      <div class="flex flex-col sm:flex-row gap-6 justify-center mt-12" data-aos="zoom-in" data-aos-delay="800">
-        <a href="#menu" class="px-10 py-5 bg-gold text-midnight font-semibold text-lg rounded-full hover:bg-yellow-500 transition transform hover:scale-105 shadow-2xl">
-          View Menu
-        </a>
-        <a href="#how-it-works" class="px-10 py-5 border-2 border-gold text-gold font-semibold text-lg rounded-full hover:bg-gold hover:text-midnight transition transform hover:scale-105">
-          How It Works
-        </a>
-        <a href="#about" class="px-10 py-5 bg-transparent border border-gold text-gold font-semibold text-lg rounded-full hover:bg-gold/20 transition transform hover:scale-105 backdrop-blur-sm">
-          About the Festival
-        </a>
-      </div>
+ <!-- Hero Section - Enhanced with Premium Circular Logo -->
+<section class="hero-bg relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
+  <div class="pattern-overlay"></div>
+
+  <!-- Text Container -->
+  <div class="container mx-auto px-6 text-center relative z-10" data-aos="fade-down" data-aos-duration="1200">
+    <h1 class="text-5xl md:text-7xl lg:text-8xl font-bold leading-tight">
+      <span class="text-gold">NJETTUM THATTU</span><br>
+      <span class="text-white">Hifz Da'wa</span><br>
+      <span class="text-4xl md:text-6xl lg:text-7xl text-gold">2025</span>
+    </h1>
+    <p class="text-2xl md:text-4xl font-light mt-4 text-gray-300" data-aos="fade-up" data-aos-delay="400">
+      Smart Food Counter System
+    </p>
+
+    <!-- Premium Circular Logo with Pop-in Animation + Hover Glow -->
+    <div class="relative mx-auto mt-12 mb-10 w-48 h-48 xs:w-56 xs:h-56 sm:w-64 sm:h-64 md:w-72 md:h-72 
+                    rounded-full overflow-hidden border-8 border-gold 
+                    shadow-2xl gold-glow-logo 
+                    transition-all duration-500 hover:shadow-3xl hover:scale-105 
+                    animate-logoPop"
+         data-aos="zoom-in" data-aos-delay="600" data-aos-duration="1000">
+      <img src="logo.jpeg" 
+           alt="Smart Food Counter Logo" 
+           class="w-full h-full object-cover rounded-full">
+      
+      <!-- Optional Inner Glow Ring -->
+      <div class="absolute inset-2 rounded-full border-4 border-gold/30 pointer-events-none"></div>
     </div>
-    <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce">
-      <svg class="w-10 h-10 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
-      </svg>
+
+    <!-- Fast • Fair • Digital Card -->
+    <div class="glass rounded-3xl p-8 mt-6 inline-block gold-glow" data-aos="fade-up" data-aos-delay="800">
+      <h3 class="text-2xl font-bold text-gold mb-2">Fast • Fair • Digital</h3>
+      <p class="text-gray-300">Every meal served with precision and care</p>
     </div>
-  </section>
+
+    <!-- Buttons -->
+    <div class="flex flex-col sm:flex-row gap-6 justify-center mt-12" data-aos="zoom-in" data-aos-delay="1000">
+      <a href="#menu" class="px-10 py-5 bg-gold text-midnight font-semibold text-lg rounded-full hover:bg-yellow-500 transition transform hover:scale-105 shadow-2xl">
+        View Menu
+      </a>
+      <a href="#how-it-works" class="px-10 py-5 border-2 border-gold text-gold font-semibold text-lg rounded-full hover:bg-gold hover:text-midnight transition transform hover:scale-105">
+        How It Works
+      </a>
+      <a href="#about" class="px-10 py-5 bg-transparent border border-gold text-gold font-semibold text-lg rounded-full hover:bg-gold/20 transition transform hover:scale-105 backdrop-blur-sm">
+        About the Festival
+      </a>
+    </div>
+  </div>
+
+  <!-- Scroll Indicator -->
+  <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce">
+    <svg class="w-10 h-10 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+    </svg>
+  </div>
+</section>
 
   <!-- About the Food Counter -->
   <section id="about" class="py-20 px-6 relative">
